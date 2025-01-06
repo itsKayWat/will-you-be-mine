@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Special Message 💌</title>
+
+    <!-- Dependencies -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            font-family: 'Inter', -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2.5rem;
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .button {
+            padding: 12px 24px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            background: rgba(255, 105, 180, 0.2);
+            border: 1px solid rgba(255, 105, 180, 0.3);
+            color: var(--text-white);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .button:hover {
+            background: rgba(255, 105, 180, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin: 20px auto;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, 
+                var(--pink), 
+                #ff1493, 
+                var(--pink));
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .envelope {
+            font-size: 80px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .envelope:hover {
+            transform: scale(1.1) rotate(5deg);
+            filter: brightness(1.2);
+        }
+
+        h1 {
+            color: var(--pink);
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            color: var(--text-white);
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .success-animation {
+            animation: pulse 1s ease-in-out;
+        }
+
+        .background-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 105, 180, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .phone-input {
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255, 105, 180, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 105, 180, 0.1);
+            color: var(--text-white);
+            width: 200px;
+            margin-right: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        .phone-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .number-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Update color variables */
+        :root {
+            --pink: #ff69b4;
+            --text-white: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function App() {
+            const [gameState, setGameState] = React.useState('loading');
+            const [noCount, setNoCount] = React.useState(0);
+            const [yesPressed, setYesPressed] = React.useState(false);
+            const [loadingProgress, setLoadingProgress] = React.useState(0);
+            const [phoneNumber, setPhoneNumber] = React.useState('');
+            const [submitted, setSubmitted] = React.useState(false);
+            
+            React.useEffect(() => {
+                if (gameState === 'loading') {
+                    const timer = setInterval(() => {
+                        setLoadingProgress(prev => {
+                            if (prev >= 32) {
+                                clearInterval(timer);
+                                setGameState('envelope');
+                                return 32;
+                            }
+                            return prev + 2;
+                        });
+                    }, 50);
+                    return () => clearInterval(timer);
+                }
+
+                // Add background particles
+                if (gameState !== 'loading') {
+                    createParticles();
+                }
+            }, [gameState]);
+
+            const createParticles = () => {
+                const container = document.createElement('div');
+                container.className = 'background-particles';
+                document.body.appendChild(container);
+
+                for (let i = 0; i < 50; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.width = Math.random() * 4 + 'px';
+                    particle.style.height = particle.style.width;
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.top = Math.random() * 100 + '%';
+                    particle.style.opacity = Math.random() * 0.3;
+                    particle.style.animation = `float ${Math.random() * 3 + 2}s ease-in-out infinite`;
+                    container.appendChild(particle);
+                }
+            };
+
+            const handleNoClick = () => {
+                setNoCount(prev => prev + 1);
+            };
+
+            const getNoButtonText = () => {
+                const phrases = [
+                    "No", "Are you sure?", "Really sure?", 
+                    "Think again!", "Last chance!", "Surely not?",
+                    "You might regret this!", "Give it another thought!",
+                    "Are you absolutely sure?", "This could be a mistake!",
+                    "Have a heart!", "Don't be so cold!"
+                ];
+                return phrases[Math.min(noCount, phrases.length - 1)];
+            };
+
+            const handleSubmitNumber = async (e) => {
+                e.preventDefault();
+                
+                try {
+                    // Replace with your actual Cloud Function URL
+                    const response = await fetch('YOUR_CLOUD_FUNCTION_URL', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ phoneNumber }),
+                    });
+
+                    if (response.ok) {
+                        setSubmitted(true);
+                    } else {
+                        alert('Something went wrong! Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Something went wrong! Please try again.');
+                }
+            };
+
+            const renderContent = () => {
+                switch (gameState) {
+                    case 'loading':
+                        return (
+                            <div className="card">
+                                <h1>Loading Surprise</h1>
+                                <div className="loading-bar">
+                                    <div 
+                                        className="loading-progress"
+                                        style={{ width: `${loadingProgress}%` }}
+                                    />
+                                </div>
+                                <p>Please wait...</p>
+                            </div>
+                        );
+
+                    case 'envelope':
+                        return (
+                            <div className="card">
+                                <div 
+                                    className="envelope"
+                                    onClick={() => setGameState('letter')}
+                                >
+                                    ✉️
+                                </div>
+                                <p>You've received something...</p>
+                            </div>
+                        );
+
+                    case 'letter':
+                        return (
+                            <div className="card">
+                                <h1>Hey there</h1>
+                                <p>
+                                    I've been wanting to ask you something...<br/>
+                                    But first, are you ready?
+                                </p>
+                                <button 
+                                    className="button"
+                                    onClick={() => setGameState('question')}
+                                >
+                                    I'm ready
+                                </button>
+                            </div>
+                        );
+
+                    case 'question':
+                        if (yesPressed) {
+                            if (submitted) {
+                                return (
+                                    <div className="card success-animation">
+                                        <h1>Perfect! 🎉</h1>
+                                        <p>I'll text you soon! 💫</p>
+                                    </div>
+                                );
+                            }
+                            
+                            return (
+                                <div className="card success-animation">
+                                    <h1>Perfect! 🎉</h1>
+                                    <p>Let me get your number so I can text you the details!</p>
+                                    <form onSubmit={handleSubmitNumber} className="number-form">
+                                        <input
+                                            type="tel"
+                                            value={phoneNumber}
+                                            onChange={(e) => setPhoneNumber(e.target.value)}
+                                            placeholder="Your phone number"
+                                            pattern="[0-9]{10}"
+                                            required
+                                            className="phone-input"
+                                        />
+                                        <button type="submit" className="button">
+                                            Send
+                                        </button>
+                                    </form>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div className="card">
+                                <h1>Would you like to go out sometime?</h1>
+                                <div>
+                                    <button 
+                                        className="button"
+                                        onClick={() => setYesPressed(true)}
+                                    >
+                                        Yes
+                                    </button>
+                                    <button 
+                                        className="button"
+                                        onClick={handleNoClick}
+                                        style={{
+                                            marginLeft: `${noCount * 20}px`,
+                                            position: noCount > 0 ? 'absolute' : 'relative',
+                                            left: noCount > 0 ? `${Math.random() * (window.innerWidth - 200)}px` : 'auto',
+                                            top: noCount > 0 ? `${Math.random() * (window.innerHeight - 100)}px` : 'auto'
+                                        }}
+                                    >
+                                        {getNoButtonText()}
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                }
+            };
+
+            return renderContent();
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
